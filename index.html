@@ -18,15 +18,14 @@ padding:12px;
 max-width:980px;
 margin:auto;
 background:#020617;
-padding:14px;
+padding:12px;
 border-radius:10px;
 }
 
 input,button{
-padding:8px;
-border-radius:7px;
+padding:7px;
+border-radius:6px;
 border:none;
-font-size:14px;
 }
 
 button{
@@ -37,30 +36,20 @@ cursor:pointer;
 
 table{
 width:100%;
-border-collapse:separate;
-border-spacing:0 8px;
-margin-top:14px;
+border-collapse:collapse;
+margin-top:12px;
 font-size:14px;
 }
 
 th,td{
-padding:10px 14px;
 border-bottom:1px solid #1f2933;
-white-space:nowrap;
+padding:6px 10px;
 }
 
-th{
-text-align:left;
-}
-
-td:nth-child(1){min-width:110px;}
-td:nth-child(2){min-width:60px;}
-td:nth-child(3){min-width:180px;}
-td:nth-child(4){min-width:90px;}
-td:nth-child(5){
-min-width:110px;
+td:nth-child(1),th:nth-child(1){padding-right:18px;}
+td:nth-child(5),th:nth-child(5){
+padding-left:18px;
 text-align:right;
-font-weight:bold;
 }
 
 .total-dia{
@@ -73,22 +62,20 @@ margin-top:12px;
 font-size:18px;
 font-weight:bold;
 color:#22d3ee;
-text-align:right;
 }
 
 .formTop{
 display:grid;
-grid-template-columns:1fr auto auto;
-gap:10px;
-margin-bottom:14px;
-align-items:center;
+grid-template-columns:1fr auto auto auto;
+gap:8px;
+margin-bottom:10px;
 }
 
 .linea{
 display:grid;
-grid-template-columns:90px 1fr 110px 110px;
+grid-template-columns:70px 1fr 110px 90px;
 gap:10px;
-margin-bottom:10px;
+margin-bottom:6px;
 align-items:center;
 }
 
@@ -96,10 +83,9 @@ align-items:center;
 color:#38bdf8;
 font-weight:bold;
 text-align:right;
-padding-right:6px;
 }
 
-hr{border:0;border-top:1px solid #1f2933;margin:12px 0;}
+hr{border:0;border-top:1px solid #1f2933;margin:10px 0;}
 </style>
 </head>
 <body>
@@ -111,7 +97,8 @@ hr{border:0;border-top:1px solid #1f2933;margin:12px 0;}
 <div class="formTop">
 <input type="date" id="fecha">
 <button type="button" id="btnGuardar">Guardar día</button>
-<button type="button" onclick="generarPDF()">Exportar PDF</button>
+<button type="button" onclick="generarPDF()">PDF</button>
+<button type="button" onclick="borrarTodo()">Borrar todo</button>
 </div>
 
 <div id="lineas"></div>
@@ -152,53 +139,44 @@ document.getElementById("fecha").value =
 new Date().toISOString().split("T")[0];
 
 function crearLineas(){
-
-lineasDiv.innerHTML="";
-
 for(let i=1;i<=5;i++){
-
-const fila = document.createElement("div");
-fila.className = "linea";
-
-fila.innerHTML = `
+const fila=document.createElement("div");
+fila.className="linea";
+fila.innerHTML=`
 <input type="number" min="1" id="q${i}" placeholder="Cant.">
 <input type="text" id="c${i}" placeholder="Concepto">
 <input type="number" step="0.01" id="m${i}" placeholder="Precio">
-<div class="sub" id="s${i}">$ 0.00</div>
+<div class="sub" id="s${i}">$0.00</div>
 `;
-
 lineasDiv.appendChild(fila);
 
 document.getElementById("q"+i).addEventListener("input",()=>calcLinea(i));
 document.getElementById("m"+i).addEventListener("input",()=>calcLinea(i));
 }
 }
-
 crearLineas();
 
 function calcLinea(i){
-const q = parseFloat(document.getElementById("q"+i).value) || 0;
-const p = parseFloat(document.getElementById("m"+i).value) || 0;
-document.getElementById("s"+i).textContent = "$ " + (q*p).toFixed(2);
+const q=parseFloat(document.getElementById("q"+i).value)||0;
+const p=parseFloat(document.getElementById("m"+i).value)||0;
+document.getElementById("s"+i).textContent="$ "+(q*p).toFixed(2);
 }
 
 btnGuardar.addEventListener("click",agregarDia);
 
 function agregarDia(){
 
-const fecha = document.getElementById("fecha").value;
-if(!fecha){ alert("Selecciona fecha"); return; }
+const fecha=document.getElementById("fecha").value;
+if(!fecha){alert("Selecciona fecha");return;}
 
-let agrego = false;
+let agrego=false;
 
 for(let i=1;i<=5;i++){
-
-const q = parseFloat(document.getElementById("q"+i).value);
-const c = document.getElementById("c"+i).value.trim();
-const p = parseFloat(document.getElementById("m"+i).value);
+const q=parseFloat(document.getElementById("q"+i).value);
+const c=document.getElementById("c"+i).value.trim();
+const p=parseFloat(document.getElementById("m"+i).value);
 
 if(c && !isNaN(q) && !isNaN(p)){
-
 compras.push({
 fecha,
 cantidad:q,
@@ -206,8 +184,7 @@ concepto:c,
 precio:p,
 importe:q*p
 });
-
-agrego = true;
+agrego=true;
 }
 }
 
@@ -226,12 +203,19 @@ for(let i=1;i<=5;i++){
 document.getElementById("q"+i).value="";
 document.getElementById("c"+i).value="";
 document.getElementById("m"+i).value="";
-document.getElementById("s"+i).textContent="$ 0.00";
+document.getElementById("s"+i).textContent="$0.00";
 }
 }
 
 function guardar(){
 localStorage.setItem("comprasCantidad",JSON.stringify(compras));
+}
+
+function borrarTodo(){
+if(!confirm("¿Borrar todo el historial?")) return;
+compras=[];
+localStorage.removeItem("comprasCantidad");
+pintar();
 }
 
 function borrar(i){
@@ -243,29 +227,29 @@ pintar();
 
 function editar(i){
 
-const r = compras[i];
+const r=compras[i];
 
-const cant = prompt("Cantidad",r.cantidad);
+const cant=prompt("Cantidad",r.cantidad);
 if(cant===null) return;
 
-const conc = prompt("Concepto",r.concepto);
+const conc=prompt("Concepto",r.concepto);
 if(conc===null) return;
 
-const prec = prompt("Precio",r.precio);
+const prec=prompt("Precio",r.precio);
 if(prec===null) return;
 
-const q = parseFloat(cant);
-const p = parseFloat(prec);
+const q=parseFloat(cant);
+const p=parseFloat(prec);
 
-if(isNaN(q) || isNaN(p)){
+if(isNaN(q)||isNaN(p)){
 alert("Datos inválidos");
 return;
 }
 
-r.cantidad = q;
-r.concepto = conc;
-r.precio = p;
-r.importe = q*p;
+r.cantidad=q;
+r.concepto=conc;
+r.precio=p;
+r.importe=q*p;
 
 guardar();
 pintar();
@@ -274,41 +258,39 @@ pintar();
 function pintar(){
 
 tabla.innerHTML="";
-let totalGeneral = 0;
+let totalGeneral=0;
 
-const grupos = {};
+const grupos={};
 
 compras.forEach((c,i)=>{
-if(!grupos[c.fecha]) grupos[c.fecha]=[];
+if(!grupos[c.fecha])grupos[c.fecha]=[];
 grupos[c.fecha].push({...c,index:i});
 });
 
 Object.keys(grupos).sort().forEach(fecha=>{
 
-let totalDia = 0;
+let totalDia=0;
 
 grupos[fecha].forEach(r=>{
 
-totalDia += r.importe;
-totalGeneral += r.importe;
+totalDia+=r.importe;
+totalGeneral+=r.importe;
 
-const tr = document.createElement("tr");
-
-tr.innerHTML = `
+const tr=document.createElement("tr");
+tr.innerHTML=`
 <td>${fecha}</td>
 <td>${r.cantidad}</td>
 <td>${r.concepto}</td>
 <td>$ ${r.precio.toFixed(2)}</td>
 <td>$ ${r.importe.toFixed(2)}</td>
-<td><button type="button" onclick="editar(${r.index})">✏️</button></td>
-<td><button type="button" onclick="borrar(${r.index})">✖</button></td>
+<td><button onclick="editar(${r.index})">✏️</button></td>
+<td><button onclick="borrar(${r.index})">✖</button></td>
 `;
-
 tabla.appendChild(tr);
 
 });
 
-const trTotal = document.createElement("tr");
+const trTotal=document.createElement("tr");
 trTotal.className="total-dia";
 trTotal.innerHTML=`
 <td colspan="4">Total del día (${fecha})</td>
@@ -316,46 +298,39 @@ trTotal.innerHTML=`
 <td></td>
 <td></td>
 `;
-
 tabla.appendChild(trTotal);
 
 });
 
-document.getElementById("totalGeneral").textContent =
+document.getElementById("totalGeneral").textContent=
 totalGeneral.toFixed(2);
 }
 
 pintar();
 
-/* ---------------- PDF ---------------- */
+/* -------- PDF -------- */
 
 function generarPDF(){
 
-if(compras.length===0){
-alert("No hay datos");
-return;
-}
+const {jsPDF}=window.jspdf;
+const doc=new jsPDF();
 
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF();
+let y=10;
 
-let y = 12;
-
-doc.setFontSize(14);
+doc.setFontSize(12);
 doc.text("Registro de compras",10,y);
 y+=8;
 
-const grupos = {};
-let totalGeneral = 0;
+const grupos={};
 
-compras.forEach(c=>{
-if(!grupos[c.fecha]) grupos[c.fecha]=[];
-grupos[c.fecha].push(c);
+compras.forEach(r=>{
+if(!grupos[r.fecha])grupos[r.fecha]=[];
+grupos[r.fecha].push(r);
 });
 
 Object.keys(grupos).sort().forEach(fecha=>{
 
-let totalDia=0;
+if(y>270){doc.addPage();y=10;}
 
 doc.setFontSize(11);
 doc.text("Fecha: "+fecha,10,y);
@@ -363,46 +338,33 @@ y+=6;
 
 doc.setFontSize(10);
 doc.text("Cant.",10,y);
-doc.text("Concepto",28,y);
-doc.text("Precio",120,y);
-doc.text("Importe",160,y);
+doc.text("Concepto",30,y);
+doc.text("Precio",125,y);
+doc.text("Importe",165,y);
 y+=4;
+
+let totalDia=0;
 
 grupos[fecha].forEach(r=>{
 
+if(y>270){doc.addPage();y=10;}
+
 doc.text(String(r.cantidad),10,y);
-doc.text(r.concepto,28,y,{maxWidth:85});
-doc.text("$ "+r.precio.toFixed(2),120,y);
-doc.text("$ "+r.importe.toFixed(2),160,y);
+doc.text(r.concepto,30,y);
+doc.text("$ "+r.precio.toFixed(2),125,y);
+doc.text("$ "+r.importe.toFixed(2),165,y);
 
 totalDia+=r.importe;
-totalGeneral+=r.importe;
+y+=5;
+});
 
-y+=6;
-
-if(y>275){
-doc.addPage();
-y=12;
-}
+y+=2;
+doc.text("Total del día: $ "+totalDia.toFixed(2),125,y);
+y+=8;
 
 });
 
-doc.text("Total del día:",120,y);
-doc.text("$ "+totalDia.toFixed(2),160,y);
-
-y+=10;
-
-if(y>275){
-doc.addPage();
-y=12;
-}
-
-});
-
-doc.setFontSize(12);
-doc.text("Total general: $ "+totalGeneral.toFixed(2),10,y);
-
-doc.save("registro-compras.pdf");
+doc.save("registro_compras.pdf");
 }
 </script>
 
