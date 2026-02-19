@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Registro diario de compras</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+margin:0;
+padding:12px;
+}
+
+.box{
+max-width:980px;
+margin:auto;
+background:#020617;
+padding:12px;
+border-radius:10px;
+}
+
+input,button{
+padding:7px;
+border-radius:6px;
+border:none;
+}
+
+button{
+background:#38bdf8;
+font-weight:bold;
+cursor:pointer;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:12px;
+font-size:14px;
+}
+
+th,td{
+border-bottom:1px solid #1f2933;
+padding:6px;
+}
+
+.total-dia{
+background:#111827;
+font-weight:bold;
+}
+
+.total-general{
+margin-top:12px;
+font-size:18px;
+font-weight:bold;
+color:#22d3ee;
+}
+
+.formTop{
+display:grid;
+grid-template-columns:1fr auto;
+gap:8px;
+margin-bottom:10px;
+}
+
+.linea{
+display:grid;
+grid-template-columns:70px 1fr 110px 90px;
+gap:6px;
+margin-bottom:6px;
+align-items:center;
+}
+
+.sub{
+color:#38bdf8;
+font-weight:bold;
+text-align:right;
+}
+
+hr{border:0;border-top:1px solid #1f2933;margin:10px 0;}
+</style>
+</head>
+<body>
+
+<div class="box">
+
+<h3>Registro de compras</h3>
+
+<div class="formTop">
+<input type="date" id="fecha">
+<button type="button" id="btnGuardar">Guardar día</button>
+</div>
+
+<div id="lineas"></div>
+
+<hr>
+
+<table>
+<thead>
+<tr>
+<th>Fecha</th>
+<th>Cant.</th>
+<th>Concepto</th>
+<th>Precio</th>
+<th>Importe</th>
+<th>Editar</th>
+<th></th>
+</tr>
+</thead>
+<tbody id="tabla"></tbody>
+</table>
+
+<div class="total-general">
+Total general: $ <span id="totalGeneral">0.00</span>
+</div>
+
+</div>
+
+<script>
+const lineasDiv = document.getElementById("lineas");
+const tabla = document.getElementById("tabla");
+const btnGuardar = document.getElementById("btnGuardar");
+
+let compras = JSON.parse(localStorage.getItem("comprasCantidad") || "[]");
+
+document.getElementById("fecha").value =
+new Date().toISOString().split("T")[0];
+
+function crearLineas(){
+for(let i=1;i<=5;i++){
+
+const fila = document.createElement("div");
+fila.className = "linea";
+
+fila.innerHTML = `
+<input type="number" min="1" id="q${i}" placeholder="Cant.">
+<input type="text" id="c${i}" placeholder="Concepto">
+<input type="number" step="0.01" id="m${i}" placeholder="Precio">
+<div class="sub" id="s${i}">$0.00</div>
+`;
+
+lineasDiv.appendChild(fila);
+
+document.getElementById("q"+i).addEventListener("input",()=>calcLinea(i));
+document.getElementById("m"+i).addEventListener("input",()=>calcLinea(i));
+}
+}
+
+crearLineas();
+
+function calcLinea(i){
+const q = parseFloat(document.getElementById("q"+i).value) || 0;
+const p = parseFloat(document.getElementById("m"+i).value) || 0;
+document.getElementById("s"+i).textContent = "$ " + (q*p).toFixed(2);
+}
+
+btnGuardar.addEventListener("click",agregarDia);
+
+function agregarDia(){
+
+const fecha = document.getElementById("fecha").value;
+if(!fecha){ alert("Selecciona fecha"); return; }
+
+let agrego = false;
+
+for(let i=1;i<=5;i++){
+
+const q = parseFloat(document.getElementById("q"+i).value);
+const c = document.getElementById("c"+i).value.trim();
+const p = parseFloat(document.getElementById("m"+i).value);
+
+if(c && !isNaN(q) && !isNaN(p)){
+
+compras.push({
+fecha,
+cantidad:q,
+concepto:c,
+precio:p,
+importe:q*p
+});
+
+agrego = true;
+}
+}
+
+if(!agrego){
+alert("No hay líneas válidas");
+return;
+}
+
+guardar();
+pintar();
+limpiar();
+}
+
+function limpiar(){
+for(let i=1;i<=5;i++){
+document.getElementById("q"+i).value="";
+document.getElementById("c"+i).value="";
+document.getElementById("m"+i).value="";
+document.getElementById("s"+i).textContent="$0.00";
+}
+}
+
+function guardar(){
+localStorage.setItem("comprasCantidad",JSON.stringify(compras));
+}
+
+function borrar(i){
+if(!confirm("¿Eliminar registro?")) return;
+compras.splice(i,1);
+guardar();
+pintar();
+}
+
+function editar(i){
+
+const r = compras[i];
+
+const cant = prompt("Cantidad",r.cantidad);
+if(cant===null) return;
+
+const conc = prompt("Concepto",r.concepto);
+if(conc===null) return;
+
+const prec = prompt("Precio",r.precio);
+if(prec===null) return;
+
+const q = parseFloat(cant);
+const p = parseFloat(prec);
+
+if(isNaN(q) || isNaN(p)){
+alert("Datos inválidos");
+return;
+}
+
+r.cantidad = q;
+r.concepto = conc;
+r.precio = p;
+r.importe = q*p;
+
+guardar();
+pintar();
+}
+
+function pintar(){
+
+tabla.innerHTML="";
+let totalGeneral = 0;
+
+const grupos = {};
+
+compras.forEach((c,i)=>{
+if(!grupos[c.fecha]) grupos[c.fecha]=[];
+grupos[c.fecha].push({...c,index:i});
+});
+
+Object.keys(grupos).sort().forEach(fecha=>{
+
+let totalDia = 0;
+
+grupos[fecha].forEach(r=>{
+
+totalDia += r.importe;
+totalGeneral += r.importe;
+
+const tr = document.createElement("tr");
+
+tr.innerHTML = `
+<td>${fecha}</td>
+<td>${r.cantidad}</td>
+<td>${r.concepto}</td>
+<td>$ ${r.precio.toFixed(2)}</td>
+<td>$ ${r.importe.toFixed(2)}</td>
+<td><button type="button" onclick="editar(${r.index})">✏️</button></td>
+<td><button type="button" onclick="borrar(${r.index})">✖</button></td>
+`;
+
+tabla.appendChild(tr);
+
+});
+
+const trTotal = document.createElement("tr");
+trTotal.className="total-dia";
+trTotal.innerHTML=`
+<td colspan="4">Total del día (${fecha})</td>
+<td>$ ${totalDia.toFixed(2)}</td>
+<td></td>
+<td></td>
+`;
+
+tabla.appendChild(trTotal);
+
+});
+
+document.getElementById("totalGeneral").textContent =
+totalGeneral.toFixed(2);
+}
+
+pintar();
+</script>
+
+</body>
+</html>
