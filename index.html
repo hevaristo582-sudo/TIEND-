@@ -36,25 +36,63 @@ cursor:pointer;
 
 table{
 width:100%;
-border-collapse:collapse;
+border-collapse:separate;
+border-spacing:0;
 margin-top:12px;
 font-size:14px;
 }
 
 th,td{
 border-bottom:1px solid #1f2933;
-padding:6px 10px;
+padding:6px 12px;
+vertical-align:middle;
 }
 
-td:nth-child(1),th:nth-child(1){padding-right:18px;}
-td:nth-child(5),th:nth-child(5){
-padding-left:18px;
+/* columnas bien separadas */
+
+th:nth-child(1),td:nth-child(1){
+white-space:nowrap;
+width:95px;
+padding-right:22px;
+}
+
+th:nth-child(2),td:nth-child(2){
+text-align:center;
+width:55px;
+}
+
+th:nth-child(3),td:nth-child(3){
+padding-right:18px;
+}
+
+th:nth-child(4),td:nth-child(4){
+white-space:nowrap;
 text-align:right;
+width:85px;
+padding-right:18px;
+}
+
+th:nth-child(5),td:nth-child(5){
+white-space:nowrap;
+text-align:right;
+width:95px;
+padding-left:28px;
+}
+
+th:nth-child(6),td:nth-child(6),
+th:nth-child(7),td:nth-child(7){
+text-align:center;
+width:55px;
 }
 
 .total-dia{
 background:#111827;
 font-weight:bold;
+}
+
+.total-dia td{
+padding-top:10px;
+padding-bottom:10px;
 }
 
 .total-general{
@@ -83,6 +121,7 @@ align-items:center;
 color:#38bdf8;
 font-weight:bold;
 text-align:right;
+white-space:nowrap;
 }
 
 hr{border:0;border-top:1px solid #1f2933;margin:10px 0;}
@@ -139,6 +178,7 @@ document.getElementById("fecha").value =
 new Date().toISOString().split("T")[0];
 
 function crearLineas(){
+lineasDiv.innerHTML="";
 for(let i=1;i<=5;i++){
 const fila=document.createElement("div");
 fila.className="linea";
@@ -146,7 +186,7 @@ fila.innerHTML=`
 <input type="number" min="1" id="q${i}" placeholder="Cant.">
 <input type="text" id="c${i}" placeholder="Concepto">
 <input type="number" step="0.01" id="m${i}" placeholder="Precio">
-<div class="sub" id="s${i}">$0.00</div>
+<div class="sub" id="s${i}">$ 0.00</div>
 `;
 lineasDiv.appendChild(fila);
 
@@ -167,7 +207,7 @@ btnGuardar.addEventListener("click",agregarDia);
 function agregarDia(){
 
 const fecha=document.getElementById("fecha").value;
-if(!fecha){alert("Selecciona fecha");return;}
+if(!fecha){ alert("Selecciona fecha"); return; }
 
 let agrego=false;
 
@@ -203,7 +243,7 @@ for(let i=1;i<=5;i++){
 document.getElementById("q"+i).value="";
 document.getElementById("c"+i).value="";
 document.getElementById("m"+i).value="";
-document.getElementById("s"+i).textContent="$0.00";
+document.getElementById("s"+i).textContent="$ 0.00";
 }
 }
 
@@ -263,7 +303,7 @@ let totalGeneral=0;
 const grupos={};
 
 compras.forEach((c,i)=>{
-if(!grupos[c.fecha])grupos[c.fecha]=[];
+if(!grupos[c.fecha]) grupos[c.fecha]=[];
 grupos[c.fecha].push({...c,index:i});
 });
 
@@ -324,7 +364,7 @@ y+=8;
 const grupos={};
 
 compras.forEach(r=>{
-if(!grupos[r.fecha])grupos[r.fecha]=[];
+if(!grupos[r.fecha]) grupos[r.fecha]=[];
 grupos[r.fecha].push(r);
 });
 
@@ -349,6 +389,7 @@ grupos[fecha].forEach(r=>{
 
 if(y>270){doc.addPage();y=10;}
 
+docdoc = doc;
 doc.text(String(r.cantidad),10,y);
 doc.text(r.concepto,30,y);
 doc.text("$ "+r.precio.toFixed(2),125,y);
